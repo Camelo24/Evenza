@@ -1,0 +1,6 @@
+import { DashboardShell } from "@/shared/components/dashboard-shell";
+import { getVendorDashboard } from "@backend/bookings/queries";
+import { requireRole } from "@backend/auth/session";
+import { MessagingPanel, type Conversation } from "@/shared/components/messaging-panel";
+export const dynamic = "force-dynamic";
+export default async function ServiceProviderMessagesPage() { const session = await requireRole("service_provider"); const data = await getVendorDashboard(session.userId); const conversations: Conversation[] = (data?.bookings ?? []).filter(({ booking }) => ["confirmed", "in_progress", "awaiting_review", "disputed"].includes(booking.status)).map(({ booking, organiser, service }) => ({ bookingId: booking.id, reference: booking.reference, title: organiser.fullName, subtitle: service?.name ?? booking.eventType, status: booking.status, messages: data!.messages.filter(({ message }) => message.bookingId === booking.id) })); return <DashboardShell role="service_provider" name={session.fullName} active="Messages"><p className="eyebrow text-berry">Client conversations</p><h1 className="display mt-2 text-4xl font-semibold sm:text-5xl">Messages.</h1><p className="mt-3 text-sm text-ink/50">Keep every confirmed booking detail in one private thread.</p><MessagingPanel conversations={conversations} currentUserId={session.userId}/></DashboardShell>; }

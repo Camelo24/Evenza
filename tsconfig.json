@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./frontend/*"],
+      "@/app/*": ["./frontend/app/*"],
+      "@/shared/*": ["./frontend/shared/*"],
+      "@backend/*": ["./backend/src/*"],
+      "@db/*": ["./backend/drizzle/*"],
+      "@db": ["./backend/drizzle"],
+      "@frontend/*": ["./frontend/*"]
+    },
+    "plugins": [{ "name": "next" }]
+  },
+  "include": [
+    "frontend/**/*.ts",
+    "frontend/**/*.tsx",
+    "backend/src/**/*.ts",
+    "frontend/.next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "backend/dist", "**/*.spec.ts"]
+}

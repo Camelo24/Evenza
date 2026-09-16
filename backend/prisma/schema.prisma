@@ -1,0 +1,504 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  client
+  service_provider
+}
+
+enum OrganizerVerificationStatus {
+  not_requested
+  pending
+  approved
+  rejected
+}
+
+enum ServiceProviderStatus {
+  not_requested
+  pending
+  approved
+  rejected
+}
+
+enum RequestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BookingStatus {
+  pending_vendor_acceptance
+  confirmed
+  rejected
+  in_progress
+  awaiting_review
+  completed
+  disputed
+  cancelled
+}
+
+enum PaymentStatus {
+  initiated
+  authorized
+  failed
+  refunded
+  partially_refunded
+}
+
+enum EscrowStatus {
+  held
+  release_scheduled
+  released
+  disputed
+  refunded
+  split
+}
+
+enum DisputeStatus {
+  open
+  under_review
+  resolved_vendor
+  resolved_organiser
+  resolved_split
+}
+
+enum ContractStatus {
+  pending
+  partially_signed
+  executed
+  void
+}
+
+enum EvidenceType {
+  photo
+  video
+  gps
+  qr
+  document
+}
+
+enum EventVisibility {
+  private
+  public
+}
+
+model User {
+  id                          String                      @id @default(uuid()) @db.Uuid
+  fullName                    String                      @map("full_name") @db.VarChar(140)
+  email                       String                      @db.VarChar(255)
+  passwordHash                String                      @map("password_hash")
+  role                        UserRole                    @default(client)
+  organizerVerificationStatus OrganizerVerificationStatus @default(not_requested) @map("organizer_verification_status")
+  serviceProviderStatus       ServiceProviderStatus       @default(not_requested) @map("service_provider_status")
+  isActive                    Boolean                     @default(true) @map("is_active")
+  isBanned                    Boolean                     @default(false) @map("is_banned")
+  mustChangePassword          Boolean                     @default(false) @map("must_change_password")
+  createdAt                   DateTime                    @default(now()) @map("created_at")
+  updatedAt                   DateTime                    @default(now()) @map("updated_at")
+  passwordSetupTokens         PasswordSetupToken[]
+  organizerApplications       OrganizerApplication[]
+  serviceProviderProfile      ServiceProviderProfile?
+
+  @@unique([email], map: "users_email_idx")
+  @@map("users")
+}
+
+model PasswordSetupToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique @map("token_hash")
+  expiresAt  DateTime @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId], map: "password_setup_tokens_user_idx")
+  @@map("password_setup_tokens")
+}
+
+model OrganizerApplication {
+  id              String                      @id @default(uuid()) @db.Uuid
+  userId          String                      @map("user_id") @db.Uuid
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName    String                      @map("business_name") @db.VarChar(180)
+  documentPath    String?                     @map("document_path") @db.Text
+  documentName    String?                     @map("document_name") @db.VarChar(255)
+  message         String?                     @db.Text
+  status          OrganizerVerificationStatus @default(pending)
+  reviewedBy      String?                     @map("reviewed_by") @db.Uuid
+  reviewNote      String?                     @map("review_note") @db.Text
+  reviewedAt      DateTime?                   @map("reviewed_at")
+  createdAt       DateTime                    @default(now()) @map("created_at")
+
+  @@index([userId], map: "organizer_applications_user_idx")
+  @@index([status], map: "organizer_applications_status_idx")
+  @@map("organizer_applications")
+}
+
+model AccessRequest {
+  id                   String        @id @default(uuid()) @db.Uuid
+  fullName             String        @map("full_name") @db.VarChar(140)
+  email                String        @db.VarChar(255)
+  desiredRole          String        @map("desired_role")
+  message              String?       @db.Text
+  phone                String?       @db.VarChar(30)
+  businessName         String?       @map("business_name") @db.VarChar(180)
+  identityDocumentPath String?       @map("identity_document_path") @db.Text
+  identityDocumentName String?       @map("identity_document_name") @db.VarChar(255)
+  status               RequestStatus @default(pending)
+  reviewedBy           String?       @map("reviewed_by") @db.Uuid
+  reviewNote           String?       @map("review_note") @db.Text
+  reviewedAt           DateTime?     @map("reviewed_at")
+  createdAt            DateTime      @default(now()) @map("created_at")
+
+  @@index([status], map: "access_requests_status_idx")
+  @@map("access_requests")
+}
+
+model VendorProfile {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @unique @map("user_id") @db.Uuid
+  businessName     String    @map("business_name") @db.VarChar(180)
+  slug             String    @db.VarChar(180)
+  tagline          String    @map("tagline") @db.VarChar(240)
+  description      String    @db.Text
+  city             String    @db.VarChar(90)
+  address          String    @db.VarChar(240)
+  latitude         Decimal?
+  longitude        Decimal?
+  rating           Decimal   @default(0)
+  reviewCount      Int       @default(0) @map("review_count")
+  startingPrice    Int       @map("starting_price")
+  verified         Boolean   @default(false)
+  responseTime     String   @default("Within 2 hours") @map("response_time") @db.VarChar(80)
+  imageUrl         String    @map("image_url") @db.Text
+  coverUrl         String    @map("cover_url") @db.Text
+  completedEvents  Int       @default(0) @map("completed_events")
+  featured         Boolean   @default(false)
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId], map: "vendor_profiles_user_idx")
+  @@unique([slug], map: "vendor_profiles_slug_idx")
+  @@map("vendor_profiles")
+}
+
+model ServiceProviderProfile {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName    String   @map("business_name") @db.VarChar(180)
+  slug            String   @db.VarChar(180)
+  tagline         String   @map("tagline") @db.VarChar(240)
+  description     String   @db.Text
+  city            String   @db.VarChar(90)
+  address         String   @db.VarChar(240)
+  latitude        Decimal?
+  longitude       Decimal?
+  rating          Decimal  @default(0)
+  reviewCount     Int      @default(0) @map("review_count")
+  startingPrice   Int      @map("starting_price")
+  verified        Boolean  @default(false)
+  responseTime    String   @default("Within 2 hours") @map("response_time") @db.VarChar(80)
+  imageUrl        String   @map("image_url") @db.Text
+  coverUrl        String   @map("cover_url") @db.Text
+  completedEvents Int      @default(0) @map("completed_events")
+  featured        Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([userId], map: "service_provider_profiles_user_idx")
+  @@unique([slug], map: "service_provider_profiles_slug_idx")
+  @@map("service_provider_profiles")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(100)
+  slug String @db.VarChar(100)
+  icon String @db.VarChar(50)
+
+  @@unique([slug], map: "categories_slug_idx")
+  @@map("categories")
+}
+
+model VendorCategory {
+  vendorId   String @map("vendor_id") @db.Uuid
+  categoryId Int    @map("category_id")
+
+  @@id([vendorId, categoryId], map: "vendor_categories_pkey")
+  @@map("vendor_categories")
+}
+
+model Service {
+  id            String   @id @default(uuid()) @db.Uuid
+  vendorId      String   @map("vendor_id") @db.Uuid
+  name          String   @db.VarChar(160)
+  description   String   @db.Text
+  price         Int
+  durationHours Int      @default(4) @map("duration_hours")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("services")
+}
+
+model VendorUnavailableDate {
+  id        String   @id @default(uuid()) @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  date      DateTime
+  reason    String?  @db.VarChar(180)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([vendorId], map: "vendor_unavailable_dates_vendor_idx")
+  @@map("vendor_unavailable_dates")
+}
+
+model Event {
+  id          String          @id @default(uuid()) @db.Uuid
+  organiserId String          @map("organiser_id") @db.Uuid
+  title       String          @db.VarChar(180)
+  eventType   String          @map("event_type") @db.VarChar(100)
+  description String?         @db.Text
+  venue       String          @db.VarChar(240)
+  city        String          @db.VarChar(90)
+  startsAt    DateTime        @map("starts_at")
+  guestCount  Int             @map("guest_count")
+  visibility  EventVisibility @default(private)
+  ticketPrice Int?           @map("ticket_price")
+  coverUrl    String?         @map("cover_url") @db.Text
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@map("events")
+}
+
+model EventVendor {
+  eventId   String   @map("event_id") @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([eventId, vendorId], map: "event_vendors_pkey")
+  @@map("event_vendors")
+}
+
+model Booking {
+  id                 String        @id @default(uuid()) @db.Uuid
+  reference          String        @db.VarChar(30)
+  organiserId        String        @map("organiser_id") @db.Uuid
+  vendorId           String        @map("vendor_id") @db.Uuid
+  serviceId          String?       @map("service_id") @db.Uuid
+  eventId            String?       @map("event_id") @db.Uuid
+  eventType          String        @map("event_type") @db.VarChar(100)
+  eventDate          DateTime      @map("event_date")
+  venue              String        @db.VarChar(240)
+  guestCount         Int           @map("guest_count")
+  notes              String?       @db.Text
+  totalAmount        Int           @map("total_amount")
+  escrowMode         String        @default("full") @map("escrow_mode") @db.VarChar(20)
+  depositPercent     Int           @default(100) @map("deposit_percent")
+  fundedAmount       Int           @map("funded_amount")
+  status             BookingStatus @default(pending_vendor_acceptance)
+  completionMarkedAt DateTime?     @map("completion_marked_at")
+  reviewDeadline     DateTime?     @map("review_deadline")
+  reviewSubmitted    Boolean       @default(false) @map("review_submitted")
+  termsSnapshot      Json?        @map("terms_snapshot")
+  termsAcceptedAt    DateTime?    @map("terms_accepted_at")
+  contract           Contract?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @default(now()) @map("updated_at")
+
+  @@unique([reference], map: "bookings_reference_idx")
+  @@index([organiserId], map: "bookings_organiser_idx")
+  @@index([vendorId], map: "bookings_vendor_idx")
+  @@map("bookings")
+}
+
+model Contract {
+  id                  String         @id @default(uuid()) @db.Uuid
+  bookingId           String         @unique @map("booking_id") @db.Uuid
+  booking             Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  termsContent        Json           @map("terms_content")
+  organiserSignedAt   DateTime?      @map("organiser_signed_at")
+  vendorSignedAt      DateTime?      @map("vendor_signed_at")
+  status              ContractStatus @default(pending)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @default(now()) @map("updated_at")
+
+  @@map("contracts")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingId         String        @map("booking_id") @db.Uuid
+  provider          String        @default("Campay") @db.VarChar(40)
+  providerReference String        @map("provider_reference") @db.VarChar(120)
+  phoneNumber       String        @map("phone_number") @db.VarChar(30)
+  amount            Int
+  currency          String        @default("XAF") @db.VarChar(3)
+  status            PaymentStatus @default(initiated)
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  @@map("payments")
+}
+
+model EscrowTransaction {
+  id                 String       @id @default(uuid()) @db.Uuid
+  bookingId          String       @map("booking_id") @db.Uuid
+  paymentId          String       @map("payment_id") @db.Uuid
+  amount             Int
+  status             EscrowStatus @default(held)
+  releaseScheduledAt DateTime?    @map("release_scheduled_at")
+  releasedAt         DateTime?    @map("released_at")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @default(now()) @map("updated_at")
+
+  @@map("escrow_transactions")
+}
+
+model Wallet {
+  id String @id @default(uuid()) @db.Uuid
+  vendorId String @unique @map("vendor_id") @db.Uuid
+  balance Int @default(0)
+  currency String @default("XAF") @db.VarChar(3)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id String @id @default(uuid()) @db.Uuid
+  walletId String @map("wallet_id") @db.Uuid
+  bookingId String @map("booking_id") @db.Uuid
+  type String @db.VarChar(30)
+  amount Int
+  balanceAfter Int @map("balance_after")
+  description String @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([bookingId, type], map: "wallet_transactions_booking_type_idx")
+  @@map("wallet_transactions")
+}
+
+model BookingConversation {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @unique @map("booking_id") @db.Uuid
+  organiserId String @map("organiser_id") @db.Uuid
+  vendorId String @map("vendor_id") @db.Uuid
+  unlockedAt DateTime @default(now()) @map("unlocked_at")
+  @@map("booking_conversations")
+}
+
+model BookingEvidence {
+  id         String       @id @default(uuid()) @db.Uuid
+  bookingId  String       @map("booking_id") @db.Uuid
+  uploadedBy String       @map("uploaded_by") @db.Uuid
+  type       EvidenceType
+  url        String?      @db.Text
+  note       String?      @db.Text
+  latitude   Decimal?
+  longitude  Decimal?
+  capturedAt DateTime     @map("captured_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  @@map("booking_evidence")
+}
+
+model Dispute {
+  id              String        @id @default(uuid()) @db.Uuid
+  bookingId       String        @map("booking_id") @db.Uuid
+  openedBy        String        @map("opened_by") @db.Uuid
+  reason          String        @db.VarChar(180)
+  description     String        @db.Text
+  status          DisputeStatus @default(open)
+  resolutionNote  String?       @map("resolution_note") @db.Text
+  vendorShare     Int?          @map("vendor_share")
+  organiserRefund Int?          @map("organiser_refund")
+  resolvedBy      String?       @map("resolved_by") @db.Uuid
+  resolvedAt      DateTime?     @map("resolved_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("disputes")
+}
+
+model DisputeLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  disputeId   String   @map("dispute_id") @db.Uuid
+  actorId     String   @map("actor_id") @db.Uuid
+  action      String   @db.VarChar(100)
+  details     String   @db.Text
+  evidenceUrl String?  @map("evidence_url") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([disputeId], map: "dispute_logs_dispute_idx")
+  @@map("dispute_logs")
+}
+
+model Message {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  senderId  String   @map("sender_id") @db.Uuid
+  body      String   @db.Text
+  attachmentPath String? @map("attachment_path") @db.Text
+  attachmentName String? @map("attachment_name") @db.VarChar(255)
+  attachmentType String? @map("attachment_type") @db.VarChar(120)
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model Ticket {
+  id          String    @id @default(uuid()) @db.Uuid
+  eventId     String    @map("event_id") @db.Uuid
+  attendeeId  String    @map("attendee_id") @db.Uuid
+  code        String    @db.VarChar(80)
+  quantity    Int       @default(1)
+  amount      Int
+  checkedInAt DateTime? @map("checked_in_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([code], map: "tickets_code_idx")
+  @@map("tickets")
+}
+
+model Review {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id") @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  rating    Int
+  comment   String   @db.Text
+  moderatedAt DateTime? @map("moderated_at")
+  moderatedBy String? @map("moderated_by") @db.Uuid
+  isHidden Boolean @default(false) @map("is_hidden")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([bookingId], map: "reviews_booking_idx")
+  @@map("reviews")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(180)
+  body      String   @db.Text
+  href      String?  @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model EmailLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  toEmail   String   @map("to_email") @db.VarChar(255)
+  subject   String   @db.VarChar(240)
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("email_log")
+}

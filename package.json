@@ -1,0 +1,62 @@
+{
+  "name": "trufeta",
+  "private": true,
+  "scripts": {
+    "dev": "next dev ./frontend --port 3000",
+    "build": "next build ./frontend",
+    "start": "next start ./frontend --port 3000",
+    "lint": "eslint frontend backend --ignore-pattern node_modules",
+    "typecheck": "tsc -p frontend/tsconfig.json --noEmit",
+    "db:push": "prisma db push --dotenv-path backend/.env",
+    "prisma:pull": "prisma db pull --dotenv-path backend/.env",
+    "prisma:generate": "prisma generate --dotenv-path backend/.env",
+    "prisma:migrate:dev": "prisma migrate dev --dotenv-path backend/.env"
+  },
+  "prisma": {
+    "schema": "backend/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.1",
+    "@nestjs/config": "^4.0.4",
+    "@prisma/client": "^5.19.0",
+    "@tanstack/react-query": "^5.101.4",
+    "@types/leaflet": "^1.9.22",
+    "@types/qrcode": "^1.5.6",
+    "axios": "^1.19.0",
+    "bcryptjs": "^3.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "dotenv": "17.3.1",
+    "drizzle-orm": "^0.45.2",
+    "framer-motion": "^13.0.0",
+    "jose": "^6.2.8",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.28.0",
+    "next": "16.2.6",
+    "nodemailer": "^9.0.5",
+    "pg": "8.20.0",
+    "postgres": "^3.4.9",
+    "qrcode": "^1.5.4",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-leaflet": "^5.0.0",
+    "reflect-metadata": "^0.2.2",
+    "server-only": "^0.0.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.17",
+    "@types/node": "22.19.15",
+    "@types/pg": "8.18.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "postcss": "8.5.8",
+    "prisma": "^5.19.0",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,6 @@
+import { DashboardShell } from "@/shared/components/dashboard-shell";
+import { getClientData } from "@backend/client/queries";
+import { requireRole } from "@backend/auth/session";
+import { Bell } from "lucide-react";
+export const dynamic = "force-dynamic";
+export default async function ClientNotificationsPage() { const session = await requireRole("client"); const data = await getClientData(session.userId); return <DashboardShell role="client" name={session.fullName} active="Notifications" allowViewSwitch={session.isOrganizer}><p className="eyebrow text-berry">Updates</p><h1 className="display mt-2 text-4xl font-semibold">Notifications.</h1><section className="mt-8 max-w-3xl divide-y divide-ink/10 rounded-[22px] border border-ink/10 bg-white p-5 sm:p-7">{data.notifications.length ? data.notifications.map((note) => <article key={note.id} className="flex justify-between gap-4 py-4 first:pt-0"><div><p className="text-sm font-bold">{note.title}</p><p className="mt-1 text-xs leading-5 text-ink/52">{note.body}</p></div><time className="mono shrink-0 text-[9px] text-ink/35">{note.createdAt.toLocaleDateString("en-CM", { day: "numeric", month: "short" })}</time></article>) : <div className="py-12 text-center"><Bell className="mx-auto text-ink/25"/><p className="mt-4 text-sm text-ink/50">No notifications yet.</p></div>}</section></DashboardShell>; }
