@@ -1,18 +1,3 @@
-# Trufeta
-
-**Trust + Fête** — Cameroon’s credential-gated event marketplace with
-escrow-protected payments, digital ticketing, and an admin trust layer.
-
-```
-trufeta/
-├── backend/                 # NestJS-shaped domain modules (PostgreSQL backend with Prisma config)
-├── frontend/                # Next.js App Router UI
-├── docs/
-│   └── Trufeta_Complete_Build_Prompt.md
-├── package.json             # monorepo scripts
-└── README.md
-```
-
 ## Backend (`backend/`)
 
 ```
@@ -125,11 +110,7 @@ npm run build && npm run start
 
 ## Admin account
 
-Password: **`trufeta-demo`**
-
-| Role  | Email            |
-|-------|------------------|
-| Admin | admin@trufeta.cm |
+Configure the admin credentials locally using environment variables.
 
 ## Environment
 
