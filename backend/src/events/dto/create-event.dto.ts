@@ -21,6 +21,9 @@ export class CreateEventDto {
   @IsString()
   startsAt!: string;
 
+  @IsString()
+  endsAt!: string;
+
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -28,12 +31,6 @@ export class CreateEventDto {
 
   @IsEnum(['private', 'public'])
   visibility!: 'private' | 'public';
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  ticketPrice?: number;
 
   @IsOptional()
   @IsString()

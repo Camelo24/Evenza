@@ -36,6 +36,10 @@ export const disputeStatus = pgEnum("dispute_status", ["open", "under_review", "
 export const contractStatus = pgEnum("contract_status", ["pending", "partially_signed", "executed", "void"]);
 export const evidenceType = pgEnum("evidence_type", ["photo", "video", "gps", "qr", "document"]);
 export const eventVisibility = pgEnum("event_visibility", ["private", "public"]);
+export const hiringPostStatus = pgEnum("hiring_post_status", ["open", "closed"]);
+export const hiringDomainStatus = pgEnum("hiring_domain_status", ["open", "closed"]);
+export const hiringApplicationStatus = pgEnum("hiring_application_status", ["pending", "shortlisted", "accepted", "rejected"]);
+export const interviewStatus = pgEnum("interview_status", ["scheduled", "completed", "cancelled"]);
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -142,10 +146,12 @@ export const events = pgTable("events", {
 	organiserId: uuid("organiser_id").notNull(),
 	title: varchar("title", { length: 180 }).notNull(),
 	eventType: varchar("event_type", { length: 100 }).notNull(),
+	serviceCategoryId: integer("service_category_id"),
 	description: text("description"),
 	venue: varchar("venue", { length: 240 }).notNull(),
 	city: varchar("city", { length: 90 }).notNull(),
 	startsAt: timestamp("starts_at").notNull(),
+	endsAt: timestamp("ends_at").notNull(),
 	guestCount: integer("guest_count").notNull(),
 	visibility: eventVisibility("visibility").default("private").notNull(),
 	ticketPrice: integer("ticket_price"),
@@ -153,11 +159,77 @@ export const events = pgTable("events", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const eventTicketTypes = pgTable("event_ticket_types", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	eventId: uuid("event_id").notNull(),
+	name: varchar("name", { length: 100 }).notNull(),
+	price: integer("price").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({ eventTicketTypeUnique: unique().on(table.eventId, table.name) }));
+
 export const eventVendors = pgTable("event_vendors", {
 	eventId: uuid("event_id").notNull(),
 	vendorId: uuid("vendor_id").notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const eventVendorApplications = pgTable("event_vendor_applications", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	eventId: uuid("event_id").notNull(),
+	vendorId: uuid("vendor_id").notNull(),
+	status: varchar("status", { length: 20 }).default("pending").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({ eventVendorUnique: unique().on(table.eventId, table.vendorId) }));
+
+// Recruitment is deliberately separate from the event itself. A post can seek
+// several service domains and each domain owns its own capacity.
+export const hiringPosts = pgTable("hiring_posts", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	eventId: uuid("event_id").notNull(),
+	organiserId: uuid("organiser_id").notNull(),
+	deadline: timestamp("deadline").notNull(),
+	status: hiringPostStatus("status").default("open").notNull(),
+	closedAt: timestamp("closed_at"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const hiringDomains = pgTable("hiring_domains", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	hiringPostId: uuid("hiring_post_id").notNull(),
+	categoryId: integer("category_id").notNull(),
+	placesNeeded: integer("places_needed").notNull(),
+	placesFilled: integer("places_filled").default(0).notNull(),
+	requirementNote: text("requirement_note"),
+	unitPrice: integer("unit_price"),
+	currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+	budget: integer("budget"),
+	status: hiringDomainStatus("status").default("open").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({ hiringDomainCategoryUnique: unique().on(table.hiringPostId, table.categoryId) }));
+
+export const hiringApplications = pgTable("hiring_applications", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	hiringPostId: uuid("hiring_post_id").notNull(),
+	hiringDomainId: uuid("hiring_domain_id").notNull(),
+	vendorId: uuid("vendor_id").notNull(),
+	status: hiringApplicationStatus("status").default("pending").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({ hiringApplicationUnique: unique().on(table.hiringDomainId, table.vendorId) }));
+
+export const interviews = pgTable("interviews", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	hiringApplicationId: uuid("hiring_application_id").notNull(),
+	organiserId: uuid("organiser_id").notNull(),
+	scheduledAt: timestamp("scheduled_at").notNull(),
+	meetingUrl: text("meeting_url"),
+	location: varchar("location", { length: 240 }),
+	note: text("note"),
+	status: interviewStatus("status").default("scheduled").notNull(),
+	completedAt: timestamp("completed_at"),
+	cancelledAt: timestamp("cancelled_at"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({ interviewApplicationUnique: unique().on(table.hiringApplicationId) }));
 
 export const bookings = pgTable("bookings", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -301,6 +373,8 @@ export const messages = pgTable("messages", {
 export const tickets = pgTable("tickets", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	eventId: uuid("event_id").notNull(),
+	ticketTypeId: uuid("ticket_type_id"),
+	ticketTypeName: varchar("ticket_type_name", { length: 100 }),
 	attendeeId: uuid("attendee_id").notNull(),
 	code: varchar("code", { length: 80 }).notNull(),
 	quantity: integer("quantity").default(1).notNull(),
@@ -358,7 +432,13 @@ export const schema = {
 	services,
 	vendorUnavailableDates,
 	events,
+	eventTicketTypes,
 	eventVendors,
+	eventVendorApplications,
+	hiringPosts,
+	hiringDomains,
+	hiringApplications,
+	interviews,
 	bookings,
 	contracts,
 	payments,

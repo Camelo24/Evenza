@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-const ServiceProviderMap = dynamic(() => import("@/shared/components/vendor-map").then((module) => module.VendorMap), {
+const ServiceProviderMap = dynamic(() => import("@/shared/components/vendor-map").then((module) => module.ServiceProviderMap), {
   ssr: false,
   loading: () => <div className="grid min-h-[360px] place-items-center bg-mint text-sm text-ink/55 sm:min-h-[480px]">Loading map…</div>,
 });
@@ -34,14 +34,14 @@ export function VendorExplorer({ vendors, categories, initialCategory = "all", i
 
   return (
     <div className="marketplace-explorer">
-      <div className="sticky top-[72px] z-30 border-y border-ink/10 bg-paper/95 py-3 backdrop-blur-xl">
+      <div className="sticky top-[72px] z-30 border-y border-[#dbe2dc] bg-[#f7f9f5]/95 py-3 backdrop-blur-xl">
         <div className="container-shell flex flex-col gap-3 lg:flex-row">
-          <label className="relative min-w-0 flex-1"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40" size={18} /><input className="field !rounded-full !bg-white !pl-11" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a service provider or service" /></label>
+          <label className="relative min-w-0 flex-1"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/40" size={18} /><input className="field !rounded-xl !border-[#d6dfd8] !bg-white !pl-11" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a service provider or service" /></label>
           <div className={`${filtersOpen ? "flex" : "hidden"} flex-col gap-3 sm:flex-row lg:flex`}>
-            <label className="relative"><select className="select-field min-w-52 appearance-none !rounded-full !bg-white pr-10" value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All services</option>{categories.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/40" size={15} /></label>
-            <label className="relative"><select className="select-field min-w-40 appearance-none !rounded-full !bg-white pr-10" value={city} onChange={(event) => setCity(event.target.value)}><option value="all">All cities</option>{cities.map((item) => <option key={item}>{item}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/40" size={15} /></label>
+            <label className="relative"><select className="select-field min-w-52 appearance-none !rounded-xl !border-[#d6dfd8] !bg-white pr-10" value={category} onChange={(event) => setCategory(event.target.value)}><option value="all">All services</option>{categories.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/40" size={15} /></label>
+            <label className="relative"><select className="select-field min-w-40 appearance-none !rounded-xl !border-[#d6dfd8] !bg-white pr-10" value={city} onChange={(event) => setCity(event.target.value)}><option value="all">All cities</option>{cities.map((item) => <option key={item}>{item}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink/40" size={15} /></label>
           </div>
-          <div className="flex gap-2"><button className="btn-secondary flex-1 lg:hidden" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={16} /> Filters</button><div className="flex rounded-full border border-ink/15 bg-white p-1"><button onClick={() => setView("list")} aria-label="List view" className={`grid size-10 place-items-center rounded-full transition ${view === "list" ? "bg-ink text-white" : "text-ink/45"}`}><List size={16} /></button><button onClick={() => setView("map")} aria-label="Map view" className={`grid size-10 place-items-center rounded-full transition ${view === "map" ? "bg-ink text-white" : "text-ink/45"}`}><Map size={16} /></button></div></div>
+          <div className="flex gap-2"><button className="btn-secondary flex-1 lg:hidden" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={16} /> Filters</button><div className="flex rounded-xl border border-[#d6dfd8] bg-white p-1"><button onClick={() => setView("list")} aria-label="List view" className={`grid size-9 place-items-center rounded-lg transition ${view === "list" ? "bg-[#101716] text-white" : "text-ink/45"}`}><List size={16} /></button><button onClick={() => setView("map")} aria-label="Map view" className={`grid size-9 place-items-center rounded-lg transition ${view === "map" ? "bg-[#101716] text-white" : "text-ink/45"}`}><Map size={16} /></button></div></div>
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export function VendorExplorer({ vendors, categories, initialCategory = "all", i
               {filtered.map((vendor, index) => { const positions = [[23,25],[62,20],[47,55],[74,67],[28,73],[82,35]]; const pos = positions[index % positions.length]; return <Link href={`/vendors/${vendor.slug}`} key={vendor.id} style={{ left: `${pos[0]}%`, top: `${pos[1]}%` }} className="map-pin absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink px-3 py-2 text-[10px] font-bold text-white shadow-xl transition hover:z-10 hover:scale-110"><span className="text-marigold">●</span> {formatXaf(vendor.startingPrice).replace(" FCFA", "k").replace(/\s/g, "")}</Link>; })}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white px-4 py-2 text-[10px] font-semibold shadow-lg"><MapPin className="mr-1 inline" size={12} /> Approximate locations · exact address after booking</div>
             </div>
-            <ServiceProviderMap vendors={filtered} />
+            <ServiceProviderMap vendors={filtered.map(v => ({ id: v.id, businessName: v.businessName, slug: v.slug, city: v.city, latitude: v.latitude, longitude: v.longitude, startingPrice: v.startingPrice, imageUrl: v.imageUrl }))} />
           </div>
         )}
         {!filtered.length && <div className="paper-card mt-6 py-20 text-center"><Search className="mx-auto text-ink/25" size={30} /><h3 className="display mt-4 text-3xl font-semibold">No exact match yet.</h3><p className="mt-2 text-sm text-ink/50">Try another service, city, or a broader search.</p></div>}

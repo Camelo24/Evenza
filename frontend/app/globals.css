@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Aminute&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Outfit:wght@300..800&family=Unbounded:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
@@ -18,7 +18,7 @@ html {
   --color-forest: #234f40;
   --color-mint: #d9eadf;
   --color-line: #dcd5c7;
-  --font-display: "Unbounded", Arial, sans-serif;
+  --font-display: "Outfit", "Unbounded", Arial, sans-serif;
   --font-logo: "Aminute", "Unbounded", Arial, sans-serif;
   --font-sans: "Inter", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
@@ -49,7 +49,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
 ::selection { background: #f5c663; color: var(--ink); }
 
-.display, h1, h2, h3 { font-family: "Unbounded", Arial, sans-serif; letter-spacing: -0.055em; }
+.display, h1, h2, h3 { font-family: "Outfit", "Unbounded", Arial, sans-serif; letter-spacing: -0.03em; }
 .logo-type { font-family: "Aminute", "Unbounded", Arial, sans-serif; letter-spacing: -0.075em; }
 .mono { font-family: "IBM Plex Mono", monospace; letter-spacing: -0.02em; }
 .eyebrow {
@@ -122,6 +122,12 @@ label .label-text { display: block; margin-bottom: .45rem; font-size: .76rem; fo
 .animate-drift { animation: drift 7s ease-in-out infinite; }
 @keyframes pulse-soft { 0%,100% { box-shadow: 0 0 0 0 rgba(244,168,28,.35); } 50% { box-shadow: 0 0 0 9px rgba(244,168,28,0); } }
 .map-pin { animation: pulse-soft 2.5s ease-in-out infinite; }
+
+/* Marquee strips: two identical halves slide by 50% for a seamless loop. */
+@keyframes marquee { from { transform: translate3d(0,0,0); } to { transform: translate3d(-50%,0,0); } }
+.marquee { overflow: hidden; }
+.marquee-track { display: flex; width: max-content; animation: marquee var(--marquee-duration, 32s) linear infinite; }
+.marquee-track:hover, .marquee-track:focus-within { animation-play-state: paused; }
 .trufeta-map-marker, .trufeta-user-marker { display: grid; place-items: center; border-radius: 999px; color: white; font-size: 24px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
 .trufeta-map-marker { background: var(--ink); border: 3px solid var(--marigold); box-shadow: 0 4px 14px rgba(23,35,31,.32); }
 .trufeta-user-marker { background: #2563eb; border: 3px solid white; box-shadow: 0 3px 12px rgba(0,0,0,.25); font-size: 15px; }
@@ -135,4 +141,5 @@ label .label-text { display: block; margin-bottom: .45rem; font-size: .76rem; fo
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .marquee-track { animation: none; transform: none; }
 }

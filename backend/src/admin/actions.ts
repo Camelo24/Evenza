@@ -182,3 +182,18 @@ export async function moderateReview(formData: FormData) {
   await db.update(reviews).set({ isHidden: parsed.hidden === "true", moderatedAt: new Date(), moderatedBy: admin.userId }).where(eq(reviews.id, parsed.reviewId));
   revalidatePath("/admin");
 }
+
+export async function updateVendorCoordinates(formData: FormData) {
+  const admin = await requireRole("admin");
+  const parsed = z.object({
+    vendorId: z.string().uuid(),
+    latitude: z.coerce.number().min(-90).max(90),
+    longitude: z.coerce.number().min(-180).max(180),
+  }).parse(Object.fromEntries(formData));
+  await db.update(vendorProfiles).set({
+    latitude: parsed.latitude.toString(),
+    longitude: parsed.longitude.toString(),
+  }).where(eq(vendorProfiles.id, parsed.vendorId));
+  revalidatePath("/admin");
+  revalidatePath("/vendors");
+}

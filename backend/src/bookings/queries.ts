@@ -6,6 +6,7 @@ import {
   escrowTransactions,
   events,
   eventVendors,
+  eventVendorApplications,
   messages,
   notifications,
   reviews,
@@ -40,7 +41,7 @@ export async function getOrganiserDashboard(organiserId: string) {
 }
 
 export async function getOrganiserEventsData(organiserId: string) {
-  const eventRows = await db.select().from(events).where(eq(events.organiserId, organiserId)).orderBy(asc(events.startsAt));
+  const eventRows = await db.select().from(events).where(eq(events.organiserId, organiserId)).orderBy(desc(events.createdAt));
   const assignments = eventRows.length
     ? await db
         .select({ eventId: eventVendors.eventId, vendor: vendorProfiles })
@@ -48,9 +49,19 @@ export async function getOrganiserEventsData(organiserId: string) {
         .innerJoin(vendorProfiles, eq(vendorProfiles.id, eventVendors.vendorId))
         .where(inArray(eventVendors.eventId, eventRows.map((event) => event.id)))
     : [];
+  const applications = eventRows.length
+    ? await db.select({ application: eventVendorApplications, vendor: vendorProfiles })
+        .from(eventVendorApplications)
+        .innerJoin(vendorProfiles, eq(vendorProfiles.id, eventVendorApplications.vendorId))
+        .where(inArray(eventVendorApplications.eventId, eventRows.map((event) => event.id)))
+    : [];
   const vendorOptions = await db.select({ id: vendorProfiles.id, businessName: vendorProfiles.businessName, city: vendorProfiles.city }).from(vendorProfiles).orderBy(asc(vendorProfiles.businessName));
   return {
-    events: eventRows.map((event) => ({ ...event, vendors: assignments.filter((row) => row.eventId === event.id).map((row) => row.vendor) })),
+    events: eventRows.map((event) => ({
+      ...event,
+      vendors: assignments.filter((row) => row.eventId === event.id).map((row) => row.vendor),
+      applications: applications.filter((row) => row.application.eventId === event.id),
+    })),
     vendorOptions,
   };
 }

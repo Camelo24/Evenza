@@ -138,7 +138,10 @@ Copy `backend/.env.example` / `frontend/.env.example`. Critical vars:
 - `DATABASE_URL`
 - `SESSION_SECRET`
 - `CRON_SECRET` (for `/api/cron/escrow-release`)
-- `CAMPAY_API_URL` / `CAMPAY_TOKEN` (optional — sandbox authorises without them)
+- `CAMPAY_API_URL=https://demo.campay.net`, `CAMPAY_APP_USERNAME`, and
+  `CAMPAY_APP_PASSWORD` for CamPay demo payments. The app obtains a short-lived
+  API token using those credentials. Leave all CamPay credentials unset to use
+  the local payment simulator. Demo transactions are limited to 25 XAF.
 - SMTP_* (optional — emails are logged to `email_log` until wired). **Production
   default is Brevo SMTP relay** — see `backend/docs/email-setup.md`.
 

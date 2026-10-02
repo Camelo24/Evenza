@@ -21,7 +21,7 @@ export default async function BookingPage({ params, searchParams }: { params: Pr
           <p className="flex max-w-xs items-start gap-2 text-xs leading-5 text-ink/52"><ShieldCheck className="mt-0.5 shrink-0 text-forest" size={16} />You are not charged directly to the service provider. Funds remain protected through delivery.</p>
         </div>
       </section>
-      <section className="container-shell py-8 sm:py-12"><BookingForm vendor={serviceProvider} initialService={query.service} /></section>
+      <section className="container-shell py-8 sm:py-12"><BookingForm serviceProvider={serviceProvider} initialService={query.service} /></section>
     </main>
   );
 }

@@ -9,9 +9,9 @@ export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @Post()
-  @UseGuards(new RolesGuard(['client']))
+  @UseGuards(new RolesGuard(['client', 'service_provider']))
   async purchase(@Body() dto: PurchaseTicketDto) {
-    const session = await requireRole('client');
+    const session = await requireRole('client', 'service_provider');
     return this.ticketsService.purchaseTicket(session, dto);
   }
 }

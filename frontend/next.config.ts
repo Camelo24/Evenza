@@ -8,7 +8,7 @@ loadEnv({ path: path.join(__dirname, "../backend/.env"), quiet: true });
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, ".."),
-  serverExternalPackages: ["pg", "bcryptjs", "drizzle-orm"],
+  serverExternalPackages: ["pg", "bcryptjs", "drizzle-orm", "@nestjs/common", "@prisma/client", ".prisma/client", "@google/generative-ai"],
   experimental: {
     // Allow importing domain modules from ../backend
     externalDir: true,

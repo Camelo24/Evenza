@@ -7,7 +7,7 @@ import { useActionState } from "react";
 
 const initialState: ActionState = { ok: false, message: "" };
 
-export function ServiceProviderProfileForm() {
+export function ServiceProviderProfileForm({ categories = [] }: { categories?: { id: number; name: string }[] }) {
   const [state, action, pending] = useActionState(createVendorProfile, initialState);
   return (
     <form action={action} className="paper-card mx-auto max-w-3xl p-6 sm:p-8">
@@ -21,6 +21,7 @@ export function ServiceProviderProfileForm() {
         <label className="sm:col-span-2"><span className="label-text">About your business</span><textarea className="textarea-field" name="description" placeholder="Describe your experience, services, and approach…" required /></label>
         <label><span className="label-text">Profile image URL</span><input className="field" name="imageUrl" type="url" placeholder="https://…" required /></label>
         <label><span className="label-text">Cover image URL</span><input className="field" name="coverUrl" type="url" placeholder="https://…" required /></label>
+        <fieldset className="sm:col-span-2"><legend className="label-text">Your service domains</legend><p className="mb-3 text-[11px] text-ink/48">Organisers can apply you to events that need one of these services.</p><div className="grid gap-2 sm:grid-cols-2">{categories.map((category) => <label key={category.id} className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink/10 px-3 py-2 text-xs"><input className="size-4 accent-forest" type="checkbox" name="categoryIds" value={category.id}/>{category.name}</label>)}</div></fieldset>
       </div>
       {state.message ? <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-sm ${state.ok ? "bg-mint text-forest" : "bg-berry/10 text-berry"}`}>{state.message}</p> : null}
       <button className="btn-ink mt-6" disabled={pending}>{pending ? <><LoaderCircle className="animate-spin" size={16} />Saving</> : <><Store size={16} />Create profile</>}</button>

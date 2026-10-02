@@ -5,6 +5,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { EventsModule } from './events/events.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { TicketsModule } from './tickets/tickets.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { TicketsModule } from './tickets/tickets.module';
     EventsModule,
     BookingsModule,
     TicketsModule,
+    AiModule,
   ],
 })
 export class AppModule {}

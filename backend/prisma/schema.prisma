@@ -89,6 +89,28 @@ enum EventVisibility {
   public
 }
 
+enum HiringPostStatus {
+  open
+  closed
+}
+
+enum HiringDomainStatus {
+  open
+  closed
+}
+
+enum HiringApplicationStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum InterviewStatus {
+  scheduled
+  completed
+  cancelled
+}
+
 model User {
   id                          String                      @id @default(uuid()) @db.Uuid
   fullName                    String                      @map("full_name") @db.VarChar(140)
@@ -264,17 +286,30 @@ model Event {
   organiserId String          @map("organiser_id") @db.Uuid
   title       String          @db.VarChar(180)
   eventType   String          @map("event_type") @db.VarChar(100)
+  serviceCategoryId Int?      @map("service_category_id")
   description String?         @db.Text
   venue       String          @db.VarChar(240)
   city        String          @db.VarChar(90)
   startsAt    DateTime        @map("starts_at")
+  endsAt      DateTime        @map("ends_at")
   guestCount  Int             @map("guest_count")
   visibility  EventVisibility @default(private)
   ticketPrice Int?           @map("ticket_price")
   coverUrl    String?         @map("cover_url") @db.Text
   createdAt   DateTime        @default(now()) @map("created_at")
+  ticketTypes EventTicketType[]
 
   @@map("events")
+}
+
+model EventTicketType {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  name      String   @db.VarChar(100)
+  price     Int
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([eventId, name])
+  @@map("event_ticket_types")
 }
 
 model EventVendor {
@@ -284,6 +319,74 @@ model EventVendor {
 
   @@id([eventId, vendorId], map: "event_vendors_pkey")
   @@map("event_vendors")
+}
+
+model EventVendorApplication {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  vendorId  String   @map("vendor_id") @db.Uuid
+  status    String   @default("pending") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([eventId, vendorId], map: "event_vendor_applications_event_vendor_idx")
+  @@map("event_vendor_applications")
+}
+
+model HiringPost {
+  id          String           @id @default(uuid()) @db.Uuid
+  eventId     String           @map("event_id") @db.Uuid
+  organiserId String           @map("organiser_id") @db.Uuid
+  deadline    DateTime
+  status      HiringPostStatus @default(open)
+  closedAt    DateTime?        @map("closed_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  domains     HiringDomain[]
+  applications HiringApplication[]
+  @@index([eventId])
+  @@index([deadline, status])
+  @@map("hiring_posts")
+}
+
+model HiringDomain {
+  id            String             @id @default(uuid()) @db.Uuid
+  hiringPostId  String             @map("hiring_post_id") @db.Uuid
+  hiringPost    HiringPost         @relation(fields: [hiringPostId], references: [id], onDelete: Cascade)
+  categoryId    Int                @map("category_id")
+  placesNeeded  Int                @map("places_needed")
+  placesFilled  Int                @default(0) @map("places_filled")
+  status        HiringDomainStatus @default(open)
+  applications  HiringApplication[]
+  @@unique([hiringPostId, categoryId])
+  @@map("hiring_domains")
+}
+
+model HiringApplication {
+  id             String                  @id @default(uuid()) @db.Uuid
+  hiringPostId   String                  @map("hiring_post_id") @db.Uuid
+  hiringPost     HiringPost              @relation(fields: [hiringPostId], references: [id], onDelete: Cascade)
+  hiringDomainId String                  @map("hiring_domain_id") @db.Uuid
+  hiringDomain   HiringDomain            @relation(fields: [hiringDomainId], references: [id], onDelete: Cascade)
+  vendorId       String                  @map("vendor_id") @db.Uuid
+  status         HiringApplicationStatus @default(pending)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  interview      Interview?
+  @@unique([hiringDomainId, vendorId])
+  @@map("hiring_applications")
+}
+
+model Interview {
+  id                  String          @id @default(uuid()) @db.Uuid
+  hiringApplicationId String          @unique @map("hiring_application_id") @db.Uuid
+  hiringApplication   HiringApplication @relation(fields: [hiringApplicationId], references: [id], onDelete: Cascade)
+  organiserId         String          @map("organiser_id") @db.Uuid
+  scheduledAt         DateTime        @map("scheduled_at")
+  meetingUrl          String          @map("meeting_url") @db.Text
+  status              InterviewStatus @default(scheduled)
+  completedAt         DateTime?       @map("completed_at")
+  cancelledAt         DateTime?       @map("cancelled_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @default(now()) @map("updated_at")
+  @@map("interviews")
 }
 
 model Booking {
@@ -454,6 +557,8 @@ model Message {
 model Ticket {
   id          String    @id @default(uuid()) @db.Uuid
   eventId     String    @map("event_id") @db.Uuid
+  ticketTypeId String?  @map("ticket_type_id") @db.Uuid
+  ticketTypeName String? @map("ticket_type_name") @db.VarChar(100)
   attendeeId  String    @map("attendee_id") @db.Uuid
   code        String    @db.VarChar(80)
   quantity    Int       @default(1)

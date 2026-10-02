@@ -38,7 +38,7 @@ type ReviewRow = {
 type EventItem = {
   id: string;
   title: string;
-  serviceProviders: ServiceProviderCard[];
+  vendors: ServiceProviderCard[];
 };
 
 function getAvailabilityStatus(serviceProvider: ServiceProviderCard) {
@@ -48,14 +48,14 @@ function getAvailabilityStatus(serviceProvider: ServiceProviderCard) {
   return "busy";
 }
 
-export function VendorAssignmentPanel({ event, vendors, categories, reviewsByVendor, error }: { event: EventItem; vendors: VendorCard[]; categories: Array<{ id: number; name: string; slug: string; icon: string }>; reviewsByVendor: Record<string, ReviewRow[]>; error?: string }) {
+export function VendorAssignmentPanel({ event, vendors, categories, reviewsByVendor, error }: { event: EventItem; vendors: ServiceProviderCard[]; categories: Array<{ id: number; name: string; slug: string; icon: string }>; reviewsByVendor: Record<string, ReviewRow[]>; error?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [location, setLocation] = useState("all");
   const [rating, setRating] = useState("all");
   const [availability, setAvailability] = useState("all");
-  const [assignedIds, setAssignedIds] = useState<string[]>(() => event.serviceProviders.map((serviceProvider) => serviceProvider.id));
+  const [assignedIds, setAssignedIds] = useState<string[]>(() => event.vendors.map((serviceProvider) => serviceProvider.id));
   const [previewServiceProvider, setPreviewServiceProvider] = useState<ServiceProviderCard | null>(null);
   const [confirmingServiceProvider, setConfirmingServiceProvider] = useState<ServiceProviderCard | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);

@@ -47,7 +47,7 @@ export default async function OrganiserDashboard() {
                 </div>
               ) : null}
               {primary.booking.status === "completed" && !existingReview ? (
-                <div className="border-t border-ink/10 bg-mint/40 p-5 sm:p-7"><p className="text-sm font-bold">Escrow released — share how it went.</p><div className="mt-4"><ReviewForm bookingId={primary.booking.id} vendorName={primary.vendor.businessName} /></div></div>
+                <div className="border-t border-ink/10 bg-mint/40 p-5 sm:p-7"><p className="text-sm font-bold">Escrow released — share how it went.</p><div className="mt-4"><ReviewForm bookingId={primary.booking.id} serviceProviderName={primary.vendor.businessName} /></div></div>
               ) : null}
               {existingReview ? <div className="border-t border-ink/10 bg-paper p-5 sm:p-7"><p className="text-xs font-bold text-forest">You reviewed this booking {existingReview.rating}★ — thank you.</p></div> : null}
             </section>

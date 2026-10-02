@@ -4,8 +4,10 @@ import { DashboardShell } from "@/shared/components/dashboard-shell";
 import { requireRole } from "@backend/auth/session";
 import { getVendorDashboard } from "@backend/bookings/queries";
 import { formatRating, formatXaf } from "@/shared/lib/format";
-import { BadgeCheck, CalendarDays, Camera, Check, Clock3, MapPin, Navigation, QrCode, ShieldCheck, Star, UploadCloud, WalletCards, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarDays, Camera, Check, Clock3, MapPin, Navigation, QrCode, ShieldCheck, Star, UploadCloud, WalletCards, X } from "lucide-react";
+import Link from "next/link";
 import { ServiceProviderProfileForm } from "@/shared/components/vendor-profile-form";
+import { getCategories } from "@backend/vendors/queries";
 import { ServiceServiceForm } from "@/shared/components/vendor-service-form";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,7 @@ type AgreementSnapshot = { service?: { name?: string; description?: string; dura
 export default async function ServiceProviderDashboardPage() {
   const session = await requireRole("service_provider");
   const data = await getVendorDashboard(session.userId);
-  if (!data) return <DashboardShell role="service_provider" name={session.fullName}><ServiceProviderProfileForm /></DashboardShell>;
+  if (!data) return <DashboardShell role="service_provider" name={session.fullName}><ServiceProviderProfileForm categories={await getCategories()} /></DashboardShell>;
   const primary = data.bookings[0];
   const agreement = (primary?.booking.termsSnapshot ?? null) as AgreementSnapshot | null;
   const pending = data.bookings.filter((item) => item.booking.status === "pending_vendor_acceptance").length;
@@ -69,6 +71,7 @@ export default async function ServiceProviderDashboardPage() {
           <section id="services" className="rounded-[22px] border border-ink/10 bg-white p-5"><p className="eyebrow text-ink/38">Active services</p><div className="mt-4 divide-y divide-ink/10">{data.services.length ? data.services.map((service) => <div key={service.id} className="py-4"><p className="text-xs font-bold">{service.name}</p><div className="mt-2 flex justify-between text-[10px] text-ink/42"><span>{service.durationHours} hours</span><span className="mono text-ink">{formatXaf(service.price)}</span></div></div>) : <p className="py-3 text-[11px] text-ink/45">Add your first service to appear in the marketplace.</p>}</div><ServiceServiceForm /></section>
           <section id="payouts" className="rounded-[22px] bg-forest p-6 text-white"><WalletCards size={21} className="text-marigold" /><h3 className="display mt-6 text-2xl font-semibold">Payout clarity.</h3><p className="mt-2 text-xs leading-5 text-white/48">Escrow funds release after organiser approval or five clear days without a dispute.</p><div className="mt-5 border-t border-white/12 pt-4"><p className="text-[9px] uppercase text-white/38">Current protected</p><p className="mono mt-1 text-lg">{formatXaf(held)}</p></div></section>
           <section className="rounded-[22px] border border-ink/10 bg-white p-5"><p className="eyebrow text-ink/38">Response standard</p><div className="mt-4 flex items-center gap-3"><Clock3 size={18} className="text-berry" /><div><p className="text-xs font-bold">{data.profile.responseTime}</p><p className="mt-1 text-[9px] text-ink/40">Visible on your profile</p></div></div></section>
+          <Link href="/vendor/dashboard/events" className="group block rounded-[22px] border border-ink/10 bg-[#f1f4ef] p-5 transition hover:border-forest/20 hover:bg-white hover:shadow-lg hover:shadow-ink/5"><div className="flex items-center justify-between"><span className="grid size-10 place-items-center rounded-xl bg-white text-forest"><CalendarDays size={18} /></span><ArrowRight size={16} className="text-forest transition group-hover:translate-x-1" /></div><p className="eyebrow mt-5 text-forest">Off the clock</p><h3 className="display mt-2 text-xl font-semibold">Attend an event</h3><p className="mt-1 text-xs leading-5 text-ink/52">Explore public events and keep your tickets in your wallet.</p></Link>
         </aside>
       </div>
     </DashboardShell>

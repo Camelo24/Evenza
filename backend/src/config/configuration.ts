@@ -4,8 +4,14 @@ export const configuration = () => ({
   sessionSecret: process.env.SESSION_SECRET ?? "trufeta-local-preview-secret-change-in-production",
   cronSecret: process.env.CRON_SECRET,
   campay: {
-    apiUrl: process.env.CAMPAY_API_URL,
+    apiUrl: process.env.CAMPAY_API_URL ?? "https://demo.campay.net",
     token: process.env.CAMPAY_TOKEN,
+    appUsername: process.env.CAMPAY_APP_USERNAME,
+    appPassword: process.env.CAMPAY_APP_PASSWORD,
+  },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
   },
   smtp: {
     host: process.env.SMTP_HOST,

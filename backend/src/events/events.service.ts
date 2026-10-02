@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@db/client';
-import { eventVendors, events, vendorProfiles } from '@db/schema';
+import { eventTicketTypes, eventVendors, events, vendorProfiles } from '@db/schema';
 import type { Session } from '@backend/auth/session';
 import type { CreateEventDto } from './dto/create-event.dto';
 
@@ -10,27 +10,31 @@ import type { CreateEventDto } from './dto/create-event.dto';
 export class EventsService {
   async createEvent(session: Session, input: CreateEventDto) {
     const startsAt = new Date(input.startsAt);
+    const endsAt = new Date(input.endsAt);
 
     if (Number.isNaN(startsAt.getTime()) || startsAt < new Date()) {
       throw new Error('The event must start in the future.');
     }
 
-    if (input.visibility === 'public' && input.ticketPrice === undefined) {
-      throw new Error('Set a ticket price for a public event.');
-    }
+    if (Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) throw new Error('The event must end after it starts.');
 
-    return db.insert(events).values({
-      id: crypto.randomUUID(),
+    const eventId = crypto.randomUUID();
+    return db.transaction(async (tx) => {
+      const event = await tx.insert(events).values({
+      id: eventId,
       organiserId: session.userId,
       title: input.title,
       eventType: input.eventType,
       venue: input.venue,
       city: input.city,
       startsAt,
+      endsAt,
       guestCount: input.guestCount,
       visibility: input.visibility,
-      ticketPrice: input.visibility === 'public' ? input.ticketPrice ?? null : null,
+      ticketPrice: null,
       description: input.description,
+      });
+      return event;
     });
   }
 

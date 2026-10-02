@@ -42,7 +42,7 @@ export async function getVendor(slug: string) {
   if (!profile) return null;
   const [serviceRows, categoryRows, unavailable] = await Promise.all([
     db.select().from(services).where(and(eq(services.vendorId, profile.id), eq(services.active, true))).orderBy(asc(services.price)),
-    db.select({ name: categories.name, slug: categories.slug }).from(vendorCategories).innerJoin(categories, eq(categories.id, vendorCategories.categoryId)).where(eq(vendorCategories.vendorId, profile.id)),
+    db.select({ id: categories.id, name: categories.name, slug: categories.slug }).from(vendorCategories).innerJoin(categories, eq(categories.id, vendorCategories.categoryId)).where(eq(vendorCategories.vendorId, profile.id)),
     db.select().from(vendorUnavailableDates).where(and(eq(vendorUnavailableDates.vendorId, profile.id), gte(vendorUnavailableDates.date, new Date()))).orderBy(asc(vendorUnavailableDates.date)),
   ]);
   return { ...profile, services: serviceRows, categories: categoryRows, unavailableDates: unavailable };

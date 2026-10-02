@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Aminute&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Outfit:wght@300..800&family=Unbounded:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -10,7 +10,7 @@
   --color-forest: #234f40;
   --color-mint: #d9eadf;
   --color-line: #dcd5c7;
-  --font-display: "Unbounded", Arial, sans-serif;
+  --font-display: "Outfit", "Unbounded", Arial, sans-serif;
   --font-logo: "Aminute", "Unbounded", Arial, sans-serif;
   --font-sans: "Inter", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
@@ -23,6 +23,20 @@
   --berry: #9f2850;
   --forest: #234f40;
   --line: #dcd5c7;
+  --panel: rgba(255,255,255,.7);
+  --panel-strong: rgba(255,255,255,.92);
+  --muted: rgba(23,35,31,.58);
+}
+html[data-theme="dark"] {
+  --ink: #edf2ee;
+  --paper: #0c1513;
+  --marigold: #f4a81c;
+  --berry: #ff7ea3;
+  --forest: #88d1b5;
+  --line: rgba(255,255,255,.12);
+  --panel: rgba(17,24,22,.82);
+  --panel-strong: rgba(19,28,26,.96);
+  --muted: rgba(237,242,238,.72);
 }
 
 * { box-sizing: border-box; }
@@ -33,13 +47,14 @@ body {
   color: var(--ink);
   font-family: "Inter", Arial, sans-serif;
   text-rendering: optimizeLegibility;
+  transition: background .2s ease, color .2s ease;
 }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-decoration: none; }
 ::selection { background: #f5c663; color: var(--ink); }
 
-.display, h1, h2, h3 { font-family: "Unbounded", Arial, sans-serif; letter-spacing: -0.055em; }
+.display, h1, h2, h3 { font-family: "Outfit", "Unbounded", Arial, sans-serif; letter-spacing: -0.03em; }
 .logo-type { font-family: "Aminute", "Unbounded", Arial, sans-serif; letter-spacing: -0.075em; }
 .mono { font-family: "IBM Plex Mono", monospace; letter-spacing: -0.02em; }
 .eyebrow {

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@db/client";
-import { services, vendorProfiles } from "@db/schema";
+import { services, vendorCategories, vendorProfiles } from "@db/schema";
 import crypto from "crypto";
 import { requireRole } from "@backend/auth/session";
 import { eq } from "drizzle-orm";
@@ -18,6 +18,7 @@ const profileSchema = z.object({
   startingPrice: z.coerce.number().int().min(0).max(100_000_000),
   imageUrl: z.string().url("Enter a valid profile image URL."),
   coverUrl: z.string().url("Enter a valid cover image URL."),
+  categoryIds: z.array(z.coerce.number().int().positive()).min(1, "Choose at least one service domain."),
 });
 
 function slugify(value: string) {
@@ -27,18 +28,23 @@ function slugify(value: string) {
 /** Creates the marketplace profile required before a vendor can receive bookings. */
 export async function createVendorProfile(_: ActionState, formData: FormData): Promise<ActionState> {
   const vendor = await requireRole("service_provider");
-  const parsed = profileSchema.safeParse(Object.fromEntries(formData));
+  const parsed = profileSchema.safeParse({ ...Object.fromEntries(formData), categoryIds: formData.getAll("categoryIds") });
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check your profile details." };
   const [existing] = await db.select({ id: vendorProfiles.id }).from(vendorProfiles).where(eq(vendorProfiles.userId, vendor.userId)).limit(1);
   if (existing) return { ok: false, message: "Your vendor profile already exists." };
   const baseSlug = slugify(parsed.data.businessName) || "vendor";
   const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
-  await db.insert(vendorProfiles).values({
-    id: crypto.randomUUID(),
-    userId: vendor.userId,
-    slug,
-    ...parsed.data,
-    responseTime: "Within 2 hours",
+  const { categoryIds, ...profileData } = parsed.data;
+  const profileId = crypto.randomUUID();
+  await db.transaction(async (tx) => {
+    await tx.insert(vendorProfiles).values({
+      id: profileId,
+      userId: vendor.userId,
+      slug,
+      ...profileData,
+      responseTime: "Within 2 hours",
+    });
+    await tx.insert(vendorCategories).values(categoryIds.map((categoryId) => ({ vendorId: profileId, categoryId })));
   });
   revalidatePath("/vendor/dashboard");
   revalidatePath("/vendors");
@@ -62,4 +68,19 @@ export async function createVendorService(_: ActionState, formData: FormData): P
   revalidatePath("/vendor/dashboard");
   revalidatePath("/vendors");
   return { ok: true, message: "Service added and ready for organisers to book." };
+}
+
+export async function updateVendorCategories(_: ActionState, formData: FormData): Promise<ActionState> {
+  const vendor = await requireRole("service_provider");
+  const parsed = z.array(z.coerce.number().int().positive()).min(1, "Choose at least one service domain.").safeParse(formData.getAll("categoryIds"));
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Choose a service domain." };
+  const [profile] = await db.select({ id: vendorProfiles.id }).from(vendorProfiles).where(eq(vendorProfiles.userId, vendor.userId)).limit(1);
+  if (!profile) return { ok: false, message: "Create your provider profile first." };
+  await db.transaction(async (tx) => {
+    await tx.delete(vendorCategories).where(eq(vendorCategories.vendorId, profile.id));
+    await tx.insert(vendorCategories).values([...new Set(parsed.data)].map((categoryId) => ({ vendorId: profile.id, categoryId })));
+  });
+  revalidatePath("/vendor/dashboard/events");
+  revalidatePath("/vendor/dashboard/services");
+  return { ok: true, message: "Your service domains are updated." };
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import crypto from "crypto";
 import { db } from "@db/client";
 import { bookingConversations, bookings, contracts, escrowTransactions, messages, payments, services, users, vendorProfiles } from "@db/schema";
 import { requireRole } from "@backend/auth/session";
@@ -89,8 +90,13 @@ export async function createBooking(_: ActionState, formData: FormData): Promise
   if (!authorization.ok) return { ok: false, message: (authorization as any).message ?? "Payment failed" };
 
   // Steps 9-13: persist payment + escrow + booking atomically.
+  const bookingId = crypto.randomUUID();
+  const contractId = crypto.randomUUID();
+  const paymentId = crypto.randomUUID();
+  const escrowId = crypto.randomUUID();
   await db.transaction(async (tx) => {
     const [booking] = await tx.insert(bookings).values({
+      id: bookingId,
       reference,
       organiserId: session.userId,
       vendorId: vendor.id,
@@ -108,12 +114,14 @@ export async function createBooking(_: ActionState, formData: FormData): Promise
       status: "pending_vendor_acceptance",
     }).returning();
     await tx.insert(contracts).values({
+      id: contractId,
       bookingId: booking.id,
       termsContent: termsSnapshot,
       organiserSignedAt: new Date(organiserAcceptedAt),
       status: "partially_signed",
     });
     const [payment] = await tx.insert(payments).values({
+      id: paymentId,
       bookingId: booking.id,
       provider: "Campay",
       providerReference: authorization.providerReference,
@@ -121,7 +129,7 @@ export async function createBooking(_: ActionState, formData: FormData): Promise
       amount: fundedAmount,
       status: "authorized",
     }).returning();
-    await tx.insert(escrowTransactions).values({ bookingId: booking.id, paymentId: payment.id, amount: fundedAmount, status: "held" });
+    await tx.insert(escrowTransactions).values({ id: escrowId, bookingId: booking.id, paymentId: payment.id, amount: fundedAmount, status: "held" });
   });
 
   // Step 14: notify vendor & organiser (in-app + email).

@@ -5,7 +5,7 @@ import type { Transporter } from 'nodemailer';
 import { db } from '@db/client';
 import crypto from 'crypto';
 import { emailLog, notifications } from '@db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq } from 'drizzle-orm';
 
 type CreateArgs = {
   userId?: string | null;
@@ -158,6 +158,12 @@ export async function sendPasswordSetConfirmation(to: string, name: string) {
   await getDefaultNotificationsService().sendPasswordSetConfirmation(to, name);
 }
 
-export async function listNotifications(userId: string) {
-  return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+export async function listNotifications(userId: string, limit = 10) {
+  return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(limit);
+}
+
+export async function countUnreadNotifications(userId: string) {
+  const [result] = await db.select({ total: count() }).from(notifications)
+    .where(and(eq(notifications.userId, userId), eq(notifications.read, false)));
+  return Number(result?.total ?? 0);
 }

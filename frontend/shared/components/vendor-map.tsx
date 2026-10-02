@@ -13,6 +13,7 @@ type MapVendor = {
   latitude: string | null;
   longitude: string | null;
   startingPrice: number;
+  imageUrl: string;
 };
 
 const cameroonCenter: L.LatLngExpression = [5.5, 12.4];
@@ -58,7 +59,24 @@ export function ServiceProviderMap({ vendors }: { vendors: MapVendor[] }) {
         <MapViewport vendors={mappedVendors} userLocation={userLocation} />
         {mappedVendors.map((vendor) => (
           <Marker key={vendor.id} position={vendor.position} icon={vendorIcon}>
-            <Popup><p className="font-semibold text-ink">{vendor.businessName}</p><p className="mt-1 text-xs text-ink/60">{vendor.city} · From {vendor.startingPrice.toLocaleString("en-CM")} FCFA</p><Link href={`/vendors/${vendor.slug}`} className="mt-2 inline-block text-xs font-bold text-berry">View profile</Link></Popup>
+            <Popup>
+              <div className="flex gap-3">
+                <img
+                  src={vendor.imageUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4.42 0-8 2.69-8 6v2h16v-2c0-3.31-3.58-6-8-6z'/%3E%3C/svg%3E"}
+                  alt={vendor.businessName}
+                  className="size-16 rounded-full object-cover bg-ink/10"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ccc'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M12 14c-4.42 0-8 2.69-8 6v2h16v-2c0-3.31-3.58-6-8-6z'/%3E%3C/svg%3E";
+                  }}
+                />
+                <div>
+                  <p className="font-semibold text-ink">{vendor.businessName}</p>
+                  <p className="mt-1 text-xs text-ink/60">{vendor.city} · From {vendor.startingPrice.toLocaleString("en-CM")} FCFA</p>
+                  <Link href={`/vendors/${vendor.slug}`} className="mt-2 inline-block text-xs font-bold text-berry">View profile</Link>
+                </div>
+              </div>
+            </Popup>
           </Marker>
         ))}
         {userLocation && <Marker position={userLocation} icon={userIcon}><Popup>Your approximate location</Popup></Marker>}
